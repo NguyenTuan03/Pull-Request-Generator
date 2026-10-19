@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Auto PR Generator - macOS DMG Builder Script
+# Auto PR Generator - macOS Desktop App & DMG Builder Script
 VERSION="${1:-1.0.0}"
 APP_NAME="Auto PR Generator"
 DMG_NAME="Auto-PR-Generator-v${VERSION}.dmg"
@@ -9,19 +9,13 @@ PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 cd "$PROJECT_DIR"
 
-echo "======================================================"
-echo "   🔨 Bắt đầu đóng gói ${APP_NAME} v${VERSION} (.dmg) "
-echo "======================================================"
+echo "=========================================================="
+echo "   🔨 Bắt đầu đóng gói Desktop App ${APP_NAME} v${VERSION} (.dmg) "
+echo "=========================================================="
 
-# 1. Kiểm tra môi trường ảo Python
+# 1. Kích hoạt môi trường ảo Python
 if [ -d ".venv" ]; then
     source .venv/bin/activate
-fi
-
-# Đảm bảo PyInstaller đã được cài
-if ! command -v pyinstaller &> /dev/null; then
-    echo "📦 Đang cài đặt PyInstaller..."
-    pip install pyinstaller
 fi
 
 # 2. Tạo AppIcon.icns nếu chưa có
@@ -47,8 +41,8 @@ if [ ! -f "$ICNS_PATH" ] && [ -f "$ICON_JPG" ]; then
     echo "✓ Đã tạo $ICNS_PATH"
 fi
 
-# 3. Biên dịch ứng dụng bằng PyInstaller
-echo "⚙️ Đang đóng gói ứng dụng với PyInstaller..."
+# 3. Biên dịch Desktop App bằng PyInstaller
+echo "⚙️ Đang đóng gói Desktop App với PyInstaller..."
 rm -rf "dist/${APP_NAME}.app" "dist/${APP_NAME}"
 
 pyinstaller \
@@ -59,22 +53,23 @@ pyinstaller \
     --icon "${ICNS_PATH}" \
     --add-data "frontend:frontend" \
     --add-data "backend:backend" \
+    --collect-all "webview" \
+    --hidden-import "webview" \
+    --hidden-import "webview.platforms.cocoa" \
+    --hidden-import "objc" \
+    --hidden-import "WebKit" \
+    --hidden-import "AppKit" \
+    --hidden-import "Foundation" \
     --hidden-import "uvicorn.logging" \
     --hidden-import "uvicorn.loops" \
     --hidden-import "uvicorn.loops.auto" \
-    --hidden-import "uvicorn.protocols" \
-    --hidden-import "uvicorn.protocols.http" \
     --hidden-import "uvicorn.protocols.http.auto" \
-    --hidden-import "uvicorn.protocols.websockets" \
     --hidden-import "uvicorn.protocols.websockets.auto" \
-    --hidden-import "uvicorn.lifespans" \
-    --hidden-import "uvicorn.lifespans.on" \
-    --hidden-import "uvicorn.lifespans.off" \
     --hidden-import "jinja2" \
     --hidden-import "httpx" \
     main.py
 
-echo "✓ Đã tạo ứng dụng: dist/${APP_NAME}.app"
+echo "✓ Đã tạo ứng dụng Desktop: dist/${APP_NAME}.app"
 
 # 4. Đóng gói file DMG bằng hdiutil
 echo "📀 Đang tạo tệp disk image (.dmg)..."
@@ -85,7 +80,7 @@ mkdir -p "$STAGING_DIR"
 # Copy file .app vào thư mục staging
 cp -R "dist/${APP_NAME}.app" "$STAGING_DIR/"
 
-# Tạo shortcut liên kết thư mục /Applications (kéo-thả cài đặt tiện lợi)
+# Tạo shortcut liên kết thư mục /Applications
 ln -s /Applications "$STAGING_DIR/Applications"
 
 # Tạo tệp DMG nén UDZO
@@ -99,8 +94,8 @@ hdiutil create \
 # Dọn dẹp staging
 rm -rf "$STAGING_DIR"
 
-echo "======================================================"
+echo "=========================================================="
 echo "   🎉 ĐÓNG GÓI THÀNH CÔNG!"
-echo "   Tệp DMG đã tạo: dist/${DMG_NAME}"
+echo "   Tệp DMG Desktop App: dist/${DMG_NAME}"
 ls -lh "dist/${DMG_NAME}"
-echo "======================================================"
+echo "=========================================================="
