@@ -9,6 +9,13 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
+# Đảm bảo CWD an toàn khi macOS LaunchServices mở từ Finder (tránh lỗi root / read-only)
+if os.getcwd() == "/":
+    try:
+        os.chdir(os.path.expanduser("~"))
+    except Exception:
+        pass
+
 from backend.controllers import pr_router
 
 app = FastAPI(
