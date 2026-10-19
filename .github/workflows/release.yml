@@ -1,0 +1,93 @@
+name: Release Auto PR Generator
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Phiên bản release (ví dụ: 1.0.0)'
+        required: true
+        default: '1.0.0'
+      is_draft:
+        description: 'Tạo dưới dạng Draft Release (Bản nháp)?'
+        type: boolean
+        required: true
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-macos:
+    name: Build macOS DMG & Create Release
+    runs-on: macos-latest
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🐍 Cấu hình Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: 📦 Cài đặt thư viện phụ thuộc
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: 🏷️ Xác định tag phiên bản
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            CLEAN_VER="${{ github.event.inputs.version }}"
+            # Loại bỏ chữ v nếu có
+            CLEAN_VER="${CLEAN_VER#v}"
+            echo "VERSION=$CLEAN_VER" >> $GITHUB_ENV
+            echo "TAG=v$CLEAN_VER" >> $GITHUB_ENV
+            echo "IS_DRAFT=${{ github.event.inputs.is_draft }}" >> $GITHUB_ENV
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+            CLEAN_VER="${TAG#v}"
+            echo "VERSION=$CLEAN_VER" >> $GITHUB_ENV
+            echo "TAG=$TAG" >> $GITHUB_ENV
+            echo "IS_DRAFT=false" >> $GITHUB_ENV
+          fi
+
+      - name: 🔨 Đóng gói macOS DMG
+        run: |
+          chmod +x scripts/build_dmg.sh
+          ./scripts/build_dmg.sh "${{ env.VERSION }}"
+
+      - name: 📤 Tạo GitHub Release & Upload DMG
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: "Auto PR Generator ${{ env.TAG }}"
+          draft: ${{ env.IS_DRAFT == 'true' }}
+          prerelease: false
+          files: dist/*.dmg
+          generate_release_notes: true
+          body: |
+            ## 🚀 Auto PR Generator ${{ env.TAG }}
+
+            Ứng dụng AI tóm tắt Pull Request GitHub tự động theo cấu trúc chuyên nghiệp.
+
+            ### 🌟 Tính năng nổi bật
+            - 🤖 **AI Engine**: Tích hợp Claude Sonnet 4.6 (Thinking) & Gemini 3.8 Flash qua Antigravity.
+            - 📑 **Cấu trúc PR chuẩn**: Tự động phân loại `## What`, `## Why`, `## How to QA?`, `## Types of changes`, `## Automation tests`.
+            - 🎨 **Giao diện hiện đại**: Dark Glassmorphism, tab kép xem trước Rendered Preview & Raw Editor.
+            - ⚡ **Tiện ích**: 1-click Copy Markdown, xem thống kê diff, lưu lịch sử tóm tắt.
+
+            ### 💻 Hướng dẫn cài đặt trên macOS
+            1. Tải tệp `.dmg` đính kèm bên dưới.
+            2. Mở tệp `.dmg` và kéo thả biểu tượng **Auto PR Generator** vào thư mục **Applications**.
+            3. Mở ứng dụng từ Launchpad hoặc Spotlight.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

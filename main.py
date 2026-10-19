@@ -27,9 +27,16 @@ app.add_middleware(
 # Đăng ký Controller Router
 app.include_router(pr_router)
 
-# Mount thư mục static
-STATIC_DIR = os.path.join(os.path.dirname(__file__), "frontend", "static")
-TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), "frontend", "templates")
+# Đường dẫn tệp hỗ trợ cả môi trường phát triển và môi trường đóng gói PyInstaller
+if getattr(sys, "frozen", False):
+    BASE_DIR = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    IS_FROZEN = True
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    IS_FROZEN = False
+
+STATIC_DIR = os.path.join(BASE_DIR, "frontend", "static")
+TEMPLATES_DIR = os.path.join(BASE_DIR, "frontend", "templates")
 
 if os.path.exists(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -56,6 +63,12 @@ def start_server(port: int = 8000, host: str = "127.0.0.1", open_browser: bool =
             webbrowser.open(url)
         except Exception:
             pass
+
+    if IS_FROZEN:
+        # Trong bản build đóng gói PyInstaller, chạy trực tiếp instance app và tắt reload
+        uvicorn.run(app, host=host, port=port, reload=False)
+        return
+
     uvicorn.run("main:app", host=host, port=port, reload=True)
 
 
