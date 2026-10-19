@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto PR Generator - AI-Powered Pull Request Summarizer</title>
+    <meta name="description" content="Công cụ tự động tóm tắt GitHub Pull Request bằng AI theo cấu trúc chuẩn chuyên nghiệp.">
+    <link rel="icon" type="image/jpeg" href="/static/assets/icon.jpg">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Marked.js & DOMPurify for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+</head>
+<body class="dark-theme">
+    <!-- Background glowing ambient lights -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+    <div class="ambient-glow glow-3"></div>
+
+    <!-- Header Navigation -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand-group">
+                <div class="brand-logo-wrapper">
+                    <img src="/static/assets/icon.jpg" alt="Auto PR Generator Icon" class="brand-logo" id="app-logo">
+                    <span class="logo-pulse"></span>
+                </div>
+                <div class="brand-info">
+                    <h1 class="brand-title">Auto PR Generator</h1>
+                    <p class="brand-subtitle">AI-Powered Pull Request Documentation</p>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <div class="engine-badge" title="Đã kết nối qua Antigravity Engine">
+                    <span class="status-dot"></span>
+                    <span class="engine-text">Antigravity AI Engine</span>
+                </div>
+                <button type="button" class="btn btn-secondary" id="btn-open-guide">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    <span>Hướng Dẫn</span>
+                </button>
+                <button type="button" class="btn btn-secondary" id="btn-open-history">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"></path></svg>
+                    <span>Lịch Sử</span>
+                    <span class="history-badge" id="history-counter">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace Container -->
+    <main class="app-main">
+        <!-- Input & Configuration Card -->
+        <section class="card input-card">
+            <div class="card-header">
+                <div class="card-title-group">
+                    <span class="step-tag">Bước 1</span>
+                    <h2 class="card-title">Nhập Đường Dẫn GitHub Pull Request</h2>
+                </div>
+                <span class="card-hint">Hỗ trợ cả repo Public & Private (đã xác thực qua gh CLI)</span>
+            </div>
+
+            <form id="pr-form" class="pr-form" onsubmit="return false;">
+                <!-- PR URL Input with Action Button -->
+                <div class="input-wrapper">
+                    <div class="input-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    </div>
+                    <input 
+                        type="url" 
+                        id="pr-url-input" 
+                        class="text-input" 
+                        placeholder="Ví dụ: https://github.com/facebook/react/pull/28000" 
+                        required 
+                        autocomplete="off"
+                        spellcheck="false"
+                    >
+                    <button type="button" id="btn-fetch-info" class="btn btn-ghost" title="Kiểm tra thông tin PR trước">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <span>Kiểm tra PR</span>
+                    </button>
+                </div>
+
+                <!-- Model Selection & Options Grid -->
+                <div class="options-grid">
+                    <div class="option-item">
+                        <label for="model-select" class="option-label">
+                            <span class="label-text">Mô hình AI xử lý:</span>
+                            <span class="label-subtext">Claude Sonnet 4.6 hoặc Gemini Flash</span>
+                        </label>
+                        <div class="select-wrapper">
+                            <select id="model-select" class="custom-select">
+                                <option value="claude-sonnet-4-6" selected>🌟 Claude Sonnet 4.6 (Khuyên dùng - Phân tích sâu)</option>
+                                <option value="gemini-3.8-flash-high">⚡ Gemini 3.8 Flash (Tốc độ cao)</option>
+                                <option value="claude-opus-4-6-thinking">🧠 Claude Opus 4.6 (Lý luận nâng cao)</option>
+                                <option value="gemini-3.8-flash-medium">🚀 Gemini 3.8 Flash Medium (Siêu tốc)</option>
+                            </select>
+                            <div class="select-arrow">▼</div>
+                        </div>
+                    </div>
+
+                    <div class="option-item">
+                        <label for="custom-notes" class="option-label">
+                            <span class="label-text">Ghi chú thêm (Tùy chọn):</span>
+                            <span class="label-subtext">Figma link, lưu ý QA, bối cảnh ticket...</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="custom-notes" 
+                            class="text-input small-input" 
+                            placeholder="Ví dụ: Link Figma: https://figma.com/..., cần test kỹ auth token"
+                        >
+                    </div>
+                </div>
+
+                <!-- Submit Action Bar -->
+                <div class="action-bar">
+                    <button type="button" id="btn-sample-pr" class="btn btn-ghost-subtle">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        <span>Thử nghiệm với link mẫu</span>
+                    </button>
+
+                    <button type="submit" id="btn-generate" class="btn btn-primary btn-glow">
+                        <span class="btn-spinner" id="generate-spinner"></span>
+                        <svg class="icon btn-icon" id="generate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                        <span id="generate-text">Tạo PR Description</span>
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- PR Metadata Summary Preview (Shown when PR is fetched) -->
+        <section id="pr-metadata-card" class="card metadata-card hidden">
+            <div class="meta-header">
+                <div class="meta-repo-branch">
+                    <span class="repo-badge" id="meta-repo">owner/repo</span>
+                    <span class="branch-flow">
+                        <span class="branch-badge head-branch" id="meta-head">feature</span>
+                        <span class="arrow-icon">→</span>
+                        <span class="branch-badge base-branch" id="meta-base">main</span>
+                    </span>
+                </div>
+                <div class="meta-diff-stats">
+                    <span class="stat-badge stat-files" id="meta-files-count">0 files</span>
+                    <span class="stat-badge stat-add" id="meta-additions">+0</span>
+                    <span class="stat-badge stat-del" id="meta-deletions">-0</span>
+                </div>
+            </div>
+            <h3 class="meta-title" id="meta-title">Pull Request Title</h3>
+            <div class="meta-author-row">
+                <span class="author-label">Tác giả:</span>
+                <span class="author-name" id="meta-author">@author</span>
+                <span class="dot-separator">•</span>
+                <span class="commits-count" id="meta-commits-count">0 commits</span>
+                <a href="#" target="_blank" rel="noopener noreferrer" class="meta-link" id="meta-github-link">
+                    Xem trên GitHub ↗
+                </a>
+            </div>
+        </section>
+
+        <!-- Output Result Section -->
+        <section id="result-card" class="card result-card hidden">
+            <div class="result-header">
+                <div class="tabs-group" role="tablist">
+                    <button type="button" class="tab-btn active" data-tab="preview" id="tab-btn-preview" role="tab" aria-selected="true">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        <span>Bản Xem Trước (Preview)</span>
+                    </button>
+                    <button type="button" class="tab-btn" data-tab="editor" id="tab-btn-editor" role="tab" aria-selected="false">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                        <span>Mã Nguồn Markdown</span>
+                    </button>
+                    <button type="button" class="tab-btn" data-tab="files" id="tab-btn-files" role="tab" aria-selected="false">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                        <span>Danh Sách Files Thay Đổi</span>
+                    </button>
+                </div>
+
+                <div class="result-actions">
+                    <span class="generation-time-badge" id="result-time-badge">⚡ 2.4s</span>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-copy-markdown" title="Sao chép toàn bộ Markdown để dán vào GitHub">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <span id="copy-btn-text">Sao Chép Markdown</span>
+                    </button>
+                    <button type="button" class="btn btn-ghost-subtle btn-sm" id="btn-download-md" title="Tải xuống tệp .md">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        <span>Tải về .md</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab Content: Rendered Preview -->
+            <div id="tab-content-preview" class="tab-pane active">
+                <div class="markdown-preview github-markdown" id="markdown-rendered-view">
+                    <!-- Rendered HTML goes here -->
+                </div>
+            </div>
+
+            <!-- Tab Content: Raw Markdown Editor -->
+            <div id="tab-content-editor" class="tab-pane">
+                <div class="editor-container">
+                    <textarea id="markdown-editor" class="markdown-textarea" spellcheck="false" placeholder="Nội dung Markdown..."></textarea>
+                    <div class="editor-footer">
+                        <span>Bạn có thể chỉnh sửa trực tiếp nội dung tại đây trước khi copy.</span>
+                        <span id="word-char-count">0 từ • 0 ký tự</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Files Changed View -->
+            <div id="tab-content-files" class="tab-pane">
+                <div class="files-list-container" id="files-list-view">
+                    <!-- Dynamic files list -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Loading State Skeleton -->
+        <section id="loading-card" class="card loading-card hidden">
+            <div class="loader-visual">
+                <div class="scanner-circle">
+                    <img src="/static/assets/icon.jpg" alt="AI Thinking" class="scanner-logo">
+                    <div class="radar-sweep"></div>
+                </div>
+            </div>
+            <h3 class="loader-title" id="loader-status-text">Đang phân tích Pull Request...</h3>
+            <p class="loader-subtext" id="loader-sub-text">AI đang đọc commits, file diffs và trích xuất cấu trúc QA, What, Why...</p>
+            <div class="progress-bar-track">
+                <div class="progress-bar-fill" id="loader-progress-bar"></div>
+            </div>
+            <div class="loader-steps">
+                <div class="step-item active" id="step-fetch">1. Tải dữ liệu PR từ GitHub</div>
+                <div class="step-item" id="step-filter">2. Lọc & tối ưu diff code</div>
+                <div class="step-item" id="step-ai">3. Antigravity AI sinh tóm tắt</div>
+                <div class="step-item" id="step-done">4. Hoàn tất tài liệu</div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal: Hướng Dẫn Sử Dụng (Vietnamese User Guide) -->
+    <div id="guide-modal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <img src="/static/assets/icon.jpg" class="modal-logo" alt="Logo">
+                    <h3 class="modal-title">Hướng Dẫn Sử Dụng Auto PR Generator</h3>
+                </div>
+                <button type="button" class="btn-close-modal" id="btn-close-guide" aria-label="Đóng">&times;</button>
+            </div>
+            <div class="modal-body user-guide-content">
+                <div class="guide-step">
+                    <div class="guide-number">1</div>
+                    <div class="guide-text">
+                        <h4>Dán link GitHub Pull Request</h4>
+                        <p>Sao chép URL của PR bạn cần tóm tắt (ví dụ: <code>https://github.com/owner/repo/pull/123</code>) và dán vào ô nhập liệu. Hệ thống hỗ trợ cả Pull Request của Repository Private nếu máy tính của bạn đã đăng nhập qua <code>gh auth login</code>.</p>
+                    </div>
+                </div>
+
+                <div class="guide-step">
+                    <div class="guide-number">2</div>
+                    <div class="guide-text">
+                        <h4>Lựa chọn mô hình AI</h4>
+                        <p>Bạn có thể chọn <strong>Claude Sonnet 4.6 (Thinking)</strong> để có phân tích mã nguồn chi tiết và chính xác nhất, hoặc <strong>Gemini 3.8 Flash</strong> để tóm tắt cực nhanh.</p>
+                    </div>
+                </div>
+
+                <div class="guide-step">
+                    <div class="guide-number">3</div>
+                    <div class="guide-text">
+                        <h4>Tự động sinh mô tả chuẩn</h4>
+                        <p>Nhấn nút <strong>"Tạo PR Description"</strong>. AI sẽ phân tích toàn bộ commit messages, các file thay đổi, diff mã nguồn và tạo ra bản mô tả bằng tiếng Anh chuẩn theo cấu trúc:</p>
+                        <ul>
+                            <li><strong>## What</strong>: Chi tiết các thay đổi logic và component.</li>
+                            <li><strong>## Why</strong>: Lý do thay đổi và bài toán cần giải quyết.</li>
+                            <li><strong>## How to QA?</strong>: Checklist các bước kiểm thử và cam kết release.</li>
+                            <li><strong>## Any screenshots or loom video?</strong>: Vị trí đính kèm hình ảnh/video.</li>
+                            <li><strong>## Types of changes</strong>: Tự động đánh dấu checkbox phù hợp (Bugfix, Feature, Performance...).</li>
+                            <li><strong>## Automation tests:</strong>: Gợi ý các test cases tự động hóa hữu ích.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="guide-step">
+                    <div class="guide-number">4</div>
+                    <div class="guide-text">
+                        <h4>Xem trước & Sao chép</h4>
+                        <p>Kiểm tra bản xem trước trực quan (Rendered Preview) hoặc chỉnh sửa trực tiếp trên tab Markdown. Nhấn <strong>"Sao Chép Markdown"</strong> và dán vào phần Description của Pull Request trên GitHub!</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="btn-got-it">Đã hiểu, bắt đầu ngay</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Drawer / Modal: Lịch Sử Tóm Tắt (History) -->
+    <div id="history-modal" class="modal-backdrop hidden">
+        <div class="modal-card history-modal-card">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <svg class="icon modal-header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"></path></svg>
+                    <h3 class="modal-title">Lịch Sử Các PR Đã Tóm Tắt</h3>
+                </div>
+                <div class="history-header-actions">
+                    <button type="button" class="btn btn-ghost-danger btn-xs" id="btn-clear-history">Xóa lịch sử</button>
+                    <button type="button" class="btn-close-modal" id="btn-close-history" aria-label="Đóng">&times;</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div id="history-list" class="history-list">
+                    <!-- History items rendered here -->
+                </div>
+                <div id="history-empty" class="history-empty hidden">
+                    <svg class="icon empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                    <p>Chưa có lịch sử tóm tắt nào.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- Custom JS -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
