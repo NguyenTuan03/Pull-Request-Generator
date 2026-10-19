@@ -28,14 +28,22 @@
 
 ---
 
-## 🛠 Hướng Dẫn Cài Đặt & Sử Dụng (Vietnamese Instructions)
+## 📦 Tải Về Ứng Dụng (macOS DMG)
+
+Người dùng macOS có thể tải trực tiếp file cài đặt `.dmg` đã đóng gói sẵn:
+- **Tải từ GitHub Releases**: Truy cập mục [GitHub Releases](https://github.com/NguyenTuan03/Pull-Request-Generator/releases) để tải file `Auto-PR-Generator-v1.0.0.dmg`.
+- **Cài đặt**: Mở file `.dmg` và kéo biểu tượng **Auto PR Generator** vào thư mục **Applications** là hoàn tất!
+
+---
+
+## 🛠 Hướng Dẫn Cài Đặt & Sử Dụng (Dành Cho Developer)
 
 ### 1. Yêu cầu hệ thống
 - macOS, Linux hoặc Windows với **Python 3.9+** (khuyên dùng Python 3.14).
 - GitHub CLI (`gh`) đã đăng nhập tài khoản của bạn (để đọc cả repository private và tránh bị giới hạn API rate limit).
 - Antigravity CLI (`agy`) đã cài đặt trên máy.
 
-### 2. Khởi chạy ứng dụng
+### 2. Khởi chạy ứng dụng từ mã nguồn
 
 Chạy file bash script:
 ```bash
@@ -58,6 +66,32 @@ python main.py
 3. (Tùy chọn) Điền thêm ghi chú như link Figma hoặc lưu ý nghiệp vụ trong ô "Ghi chú thêm".
 4. Nhấn **"Tạo PR Description"**.
 5. Xem trước bản kết quả, chỉnh sửa nếu cần và nhấn **"Sao Chép Markdown"** để dán vào PR trên GitHub.
+
+---
+
+## 🚀 Quy Trình Đóng Gói DMG & Phát Hành Phiên Bản (Release Workflow)
+
+### Cách 1: Tạo bản Draft Release tự động lên GitHub (Khuyên dùng)
+Chạy script tự động đóng gói DMG, tạo git tag và tạo bản nháp (Draft Release) trực tiếp lên GitHub:
+```bash
+./scripts/create_release.sh 1.0.0
+```
+Sau đó bạn vào [GitHub Releases](https://github.com/NguyenTuan03/Pull-Request-Generator/releases) kiểm tra và nhấn **Publish release**!
+
+### Cách 2: Tự động hóa qua GitHub Actions Workflow
+Dự án đã tích hợp sẵn GitHub Actions workflow tại [.github/workflows/release.yml](file:///Applications/Tuan/Auto%20PR%20Generator/.github/workflows/release.yml):
+- **Tự động kích hoạt khi push tag mới**:
+  ```bash
+  git tag v1.0.1
+  git push origin v1.0.1
+  ```
+- **Hoặc kích hoạt thủ công**: Vào tab **Actions** trên GitHub -> Chọn workflow **Release Auto PR Generator** -> Nhập số version và chọn tạo Draft Release.
+
+### Cách 3: Chỉ đóng gói file `.dmg` cục bộ trên máy
+```bash
+./scripts/build_dmg.sh 1.0.0
+```
+File DMG thành phẩm sẽ nằm tại `dist/Auto-PR-Generator-v1.0.0.dmg`.
 
 ---
 
