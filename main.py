@@ -16,6 +16,22 @@ if os.getcwd() == "/":
     except Exception:
         pass
 
+# Mở rộng PATH cho môi trường macOS LaunchServices (Finder)
+# Khi .app được mở từ Finder, PATH chỉ chứa /usr/bin:/bin:/usr/sbin:/sbin
+# → không tìm thấy gh CLI, agy CLI, Homebrew tools
+_EXTRA_PATHS = [
+    "/opt/homebrew/bin",
+    "/opt/homebrew/sbin",
+    "/usr/local/bin",
+    os.path.expanduser("~/.local/bin"),
+    os.path.expanduser("~/.gemini/antigravity-ide/bin"),
+    os.path.expanduser("~/.antigravity/antigravity/bin"),
+]
+_current_path = os.environ.get("PATH", "")
+_missing = [p for p in _EXTRA_PATHS if p not in _current_path and os.path.isdir(p)]
+if _missing:
+    os.environ["PATH"] = os.pathsep.join(_missing) + os.pathsep + _current_path
+
 from backend.controllers import pr_router
 
 app = FastAPI(

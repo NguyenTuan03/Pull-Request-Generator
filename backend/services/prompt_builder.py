@@ -44,12 +44,13 @@ Code Diff:
 
 CRITICAL INSTRUCTIONS:
 1. You MUST follow the EXACT Markdown template below. Do not omit any heading or comment structure.
-2. In "## Types of changes", check `[x]` for all categories that accurately apply based on your code diff analysis (e.g. Bugfix, Feature, Performance, Security, Database changes, BREAKING CHANGE, Both FE and BE). Unselected categories must stay as `- [ ]`.
-3. In "## How to QA?", write realistic, step-by-step verification checklist items tailored to the code changes, and MUST preserve the exact item: `- [ ] After merging to master, I'll make sure it's good and not locking production release`.
-4. In "## Automation tests:", MUST preserve the exact sentence "If I have time, I would add tests for the following:" followed by concrete automated test scenarios (e.g., unit tests, integration tests, edge cases) derived from the changes.
-5. In "## What", write clear, concise bullet points explaining what was changed and why it was modified.
-6. In "## Why", explain the root problem or business requirement being solved.
-7. Only output the markdown text itself. Do NOT include markdown code fences (like ```markdown ... ```) around the entire output. Do NOT include introductory or conversational filler.
+2. Be extremely concise, direct, and high-level across the entire summary. Avoid verbosity, fluff, or stating obvious code details.
+3. In "## What": ONLY describe the main feature, core purpose, or high-level functionality introduced by this branch (keep it to 1-3 concise bullet points). DO NOT list every file changed, function touched, or minor code tweak.
+4. In "## Why": Briefly state the root problem or business need being solved in 1-2 concise bullet points.
+5. In "## Types of changes", check `[x]` for all categories that accurately apply based on your code diff analysis (e.g. Bugfix, Feature, Performance, Security, Database changes, BREAKING CHANGE, Both FE and BE). Unselected categories must stay as `- [ ]`.
+6. In "## How to QA?", write concise, step-by-step verification checklist items tailored to the essential changes, and MUST preserve the exact item: `- [ ] After merging to master, I'll make sure it's good and not locking production release`.
+7. In "## Automation tests:", MUST preserve the exact sentence "If I have time, I would add tests for the following:" followed by concise automated test scenarios (e.g., unit tests, integration tests, edge cases) derived from the changes.
+8. Only output the markdown text itself. Do NOT include markdown code fences (like ```markdown ... ```) around the entire output. Do NOT include introductory or conversational filler.
 
 REQUIRED MARKDOWN TEMPLATE:
 ## What

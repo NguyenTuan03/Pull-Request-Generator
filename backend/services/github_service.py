@@ -1,9 +1,12 @@
+import logging
 import re
 import json
 import asyncio
 import shutil
 from typing import Optional, Tuple
 import httpx
+
+logger = logging.getLogger(__name__)
 
 from backend.models.enums import PRFetchSource
 from backend.models.pr_model import PRMetadata, PRFileChange
@@ -81,6 +84,8 @@ class GitHubService:
             )
             stdout, stderr = await proc.communicate()
             if proc.returncode != 0:
+                err_text = stderr.decode("utf-8", errors="replace").strip()
+                logger.warning("gh CLI exited with code %d for %s/%s#%d: %s", proc.returncode, owner, repo, number, err_text)
                 return None
 
             data = json.loads(stdout.decode("utf-8"))
@@ -132,7 +137,8 @@ class GitHubService:
                 diff_text=cleaned_diff,
                 fetch_source=PRFetchSource.GH_CLI,
             )
-        except Exception:
+        except Exception as exc:
+            logger.warning("gh CLI fetch failed for %s/%s#%d: %s", owner, repo, number, exc)
             return None
 
     async def _fetch_via_api(
@@ -151,6 +157,10 @@ class GitHubService:
             async with httpx.AsyncClient(timeout=30.0) as client:
                 res = await client.get(api_base, headers=headers)
                 if res.status_code != 200:
+                    logger.warning(
+                        "GitHub API returned %d for %s/%s#%d (token=%s)",
+                        res.status_code, owner, repo, number, "yes" if token else "no"
+                    )
                     return None
 
                 data = res.json()
@@ -203,7 +213,8 @@ class GitHubService:
                     diff_text=cleaned_diff,
                     fetch_source=PRFetchSource.GITHUB_API,
                 )
-        except Exception:
+        except Exception as exc:
+            logger.warning("GitHub API fetch failed for %s/%s#%d: %s", owner, repo, number, exc)
             return None
 
     def _filter_diff(self, diff: str) -> str:

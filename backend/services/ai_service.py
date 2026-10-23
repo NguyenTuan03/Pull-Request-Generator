@@ -56,7 +56,17 @@ class AIService:
 
         # Kiểm tra provider
         if provider == AIProvider.ANTIGRAVITY:
-            success, output = await self._call_agy_cli(prompt, model.value)
+            claude_err = ""
+            success = False
+            # Ưu tiên token Claude CLI cho model Claude; lỗi/không có thì fallback sang Antigravity
+            if model.value.startswith("claude"):
+                success, output = await self._call_claude_cli(prompt, model.value)
+                if not success:
+                    claude_err = output
+            if not success:
+                success, output = await self._call_agy_cli(prompt, model.value)
+                if not success and claude_err:
+                    output = f"{claude_err}\n{output}"
             elapsed = round(time.time() - start_time, 2)
             if not success:
                 return False, output, elapsed
@@ -84,14 +94,26 @@ class AIService:
         if not agy_path:
             return False, "Không tìm thấy công cụ Antigravity CLI (agy) trên hệ thống."
 
+        # Chạy agy -p <prompt> --model <model_name>
+        return await self._run_cli([agy_path, "-p", prompt, "--model", model_name], "Antigravity AI")
+
+    async def _call_claude_cli(self, prompt: str, model_name: str) -> Tuple[bool, str]:
+        claude_path = shutil.which("claude") or next(
+            (p for p in [os.path.expanduser("~/.claude/local/claude"), "/opt/homebrew/bin/claude"] if os.path.exists(p)),
+            None,
+        )
+        if not claude_path:
+            return False, "Không tìm thấy Claude CLI (claude) trên hệ thống."
+
+        # Claude CLI dùng model id chuẩn, không có hậu tố "-thinking" của Antigravity
+        return await self._run_cli(
+            [claude_path, "-p", prompt, "--model", model_name.removesuffix("-thinking")], "Claude CLI"
+        )
+
+    async def _run_cli(self, cmd: list, label: str) -> Tuple[bool, str]:
         try:
-            # Chạy agy -p <prompt> --model <model_name>
             proc = await asyncio.create_subprocess_exec(
-                agy_path,
-                "-p",
-                prompt,
-                "--model",
-                model_name,
+                *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
@@ -99,7 +121,7 @@ class AIService:
             stdout, stderr = await proc.communicate()
             if proc.returncode != 0:
                 err_text = stderr.decode("utf-8", errors="replace").strip()
-                return False, f"Lỗi thực thi Antigravity AI (Exit {proc.returncode}): {err_text}"
+                return False, f"Lỗi thực thi {label} (Exit {proc.returncode}): {err_text}"
 
             result = stdout.decode("utf-8", errors="replace").strip()
             if not result:
